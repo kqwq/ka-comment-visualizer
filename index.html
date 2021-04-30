@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Subpage Directory</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: rgb(14, 14, 14);
+  /*    overflow: hidden;*/
+    }
+    #search {
+      width: 50%;
+      margin: 0 auto;
+      position: absolute;
+      top: calc(50% - 15px);
+      background-color: rgb(27, 27, 27);
+      color: white;
+    }
+    #out {
+       display: none;
+    }
+    #footer {
+      font-family: monospace;
+      font-size: small;
+      position:absolute;
+      bottom:0;
+      color:black;
+      height: 20px;
+      background-color: rgb(226, 226, 226);
+      text-align: center;
+      width: 100%;
+    }
+    #footer a {
+      color: maroon;
+    }
+    canvas {
+      display: block;
+      bottom: 20px;
+      position: absolute;
+      z-index: -1;
+    }
+    div.tooltip {
+      position: absolute;
+      text-align: center;
+      padding: .5rem;
+      background: #FFFFFF;
+      color: #313639;
+      border: 1px solid #313639;
+      border-radius: 8px;
+      pointer-events: none;
+      font-size: 1.3rem;
+    }
+    #my-table-div {
+      overflow: auto;
+      height: calc(70vh - 80px);
+    }
+    #my-table tr {
+      text-align: left;
+    }
+    #my-table th {
+      text-align: left;
+    }
+
+/* Source: https://www.w3schools.com/howto/tryit.asp?filename=tryhow_css_custom_scrollbar */
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 15px;
+}
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1; 
+}
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888; 
+}
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555; 
+}
+    
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="row justify-content-center">
+      <input onkeyup="updateSearch()" class="form-control" id="search" type="text" placeholder="Program ID">
+      <div class="invalid-feedback">Project does not exist</div>
+    </div>
+  </div>
+  
+  
+  
+  <div class="container" id="out">
+    <div class="row" style="margin-top: 55px">
+      <div class="col-md-6 text-md-right" >
+        <div style="background-color: white;padding:20px;border-radius: 20px;">
+          <div>
+            <img id="com-img" style="margin-top:5px;float:left;width:50px;height:50px;padding:5px;border-radius:99px;border:solid 2px rgb(219,220,221)" src="https://cdn.kastatic.org/images/avatars/svg/piceratops-tree.svg">
+            
+          </div>
+          <div style="padding-left: 70px;padding-bottom: 30px;">
+            <div><b id="com-name">My name</b> <small id="com-timestamp" style="color:gray">Timestamp</small></div>
+            <div id="com-content">Lorem ipsum dolor sloribus accusantium necessitatibus similique, amet accusamus quisquam a, minus, ab quas enim velit praesentium. Illo, hic doloremque? Repellendus, velit blanditiis. Voluptatum, necessitatibus.</div>
+            <br>
+            <div>
+              <span style="float:left"><span id="com-replies">2</span> comments</span>
+              <span style="padding-top:4px;font-size:12px;float:right;margin-right:20px;bottom: 0;">(<span id="com-votes">5</span> Votes)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-6 text-md-center" id="my-table-div">
+        <table class="table table-striped table-dark">
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Value</th>
+            </tr>
+          </thead>
+          <tbody id="my-table">
+            <tr>
+              <td scope="row">Mark</td>
+              <td>Otto</td>
+            </tr>
+            <tr>
+              <td>Jacob</td>
+              <td>Thornton</td>
+            </tr>
+            <tr>
+              <td>Larry</td>
+              <td>the Bird</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  
+  <br>
+  <footer id="footer">Follow my <a target="_blank" href="https://github.com/githubium">GitHub</a> for more projects</footer>
+  
+  
+</body>
+<script src="https://cdn.jsdelivr.net/npm/p5@1.3.1/lib/p5.js"></script>
+<script>
+  
+  
+  let commentHovering = null;
+  
+  var cam = {
+    x: 0,
+    gotoX: 0,
+    ht: 1,
+    gotoHt: 10000000,
+    rangeX: 0,
+    x1: 0,
+    x2: 0,
+  }
+  var data = null;
+  
+  var X = function(cor){
+    return (cor-cam.x)/cam.ht+width/2;
+  };
+  
+  function setup() {
+    resizeCanvas(windowWidth, windowHeight*0.3);
+  } 
+  function windowResized() {
+    resizeCanvas(windowWidth, windowHeight*0.3);
+  }
+  
+  function init(dat) {
+    data = dat
+    
+    let comment;
+    for (comment of data.feedback) {
+      comment.timestamp = Number(new Date(comment.date));
+    }
+    data.feedback.sort((a,b) => a.timestamp - b.timestamp);
+    var df = data.feedback;
+    cam.gotoX = cam.x = df[df.length-1].timestamp;
+    cam.x1 = df[0].timestamp;
+    cam.x2 = df[df.length-1].timestamp;
+    cam.rangeX = cam.x2 - cam.x1;
+    cam.x = cam.gotoHt = (cam.x1 + cam.x2) / 2;
+    cam.gotoHt = cam.ht = cam.rangeX / width;
+  }
+  
+  function mouseWheel(event) {
+    if (mouseY < 0) return;
+    let newGotoHt = cam.gotoHt * (1+event.delta*0.001);
+    cam.gotoX += (newGotoHt - cam.gotoHt) * (width/2 - mouseX) ;
+    cam.gotoHt = newGotoHt
+    
+  };
+  
+  function keyPressed() {
+    console.log(keyCode)
+    if (keyCode===38) {
+      cam.gotoHt *= 2;
+    } else if (keyCode===40) {
+      cam.gotoHt *= 0.5;
+    }
+  }
+  
+  function draw() {if (!data)return;
+    cam.x += (cam.gotoX - cam.x) * 0.1;
+    let limit1 = cam.x1 + width * cam.ht / 2;
+    let limit2 = cam.x2 - width * cam.ht / 2;
+    if (cam.x < limit1) {
+      cam.x = cam.gotoX = limit1;
+    } else if (cam.x > limit2) {
+      cam.x = cam.gotoX = limit2;
+    }
+    cam.ht += (cam.gotoHt - cam.ht) * 0.1;
+    if (cam.ht > cam.rangeX / width) {
+      cam.ht = cam.gotoHt = cam.rangeX / width;
+    } else if (cam.ht < cam.rangeX * 0.000001) {
+      cam.gotoHt = cam.ht = cam.rangeX / width;
+    }
+    if (mouseIsPressed) {
+      cam.gotoX += (pmouseX - mouseX) * cam.ht;
+    }
+    
+    background(10);
+    
+    
+    let drawnIndices = [];
+    let i = -1;
+    let barWidth = 2;
+    let firstTime = true;
+    for (let i = data.feedback.length-1; i >= 0; i --) {
+      let comment = data.feedback[i]
+      let x = X(comment.timestamp);
+      comment.x = x;
+      if (x < -barWidth) {
+        drawnIndices.unshift(i);
+        break;
+      } else if (x > width + barWidth) {
+        continue;
+      }
+      drawnIndices.unshift(i);
+    }
+    
+    // Draw vote area
+    beginShape();
+    fill(255, 40);
+    strokeWeight(2);
+    stroke(200, 80);
+    let comment, x, y;
+    vertex(0, height);
+    for (let i of drawnIndices) {
+      comment = data.feedback[i];
+      x = comment.x;
+      y = height - height * i / drawnIndices[drawnIndices.length-1];
+      vertex(x, y);
+    }
+    vertex(width, 0)
+    vertex(width, height)
+    endShape();
+    
+    // Draw bars
+    let bestDist = 15;
+    commentHovering = null;
+    for (let i of drawnIndices) {
+      let comment = data.feedback[i];
+      let x = comment.x;
+      strokeWeight(1);
+      if (comment.flags.length) {
+        if (comment.flags.length === 1) {
+          stroke(255, 255, 0, 255);
+        } else {// 2+ flags
+          strokeWeight(2);
+          stroke(255, 0, 0, 255);
+        }
+      } else {
+        stroke(0, 140, 0, 255);
+      }
+      line(x, 0, x, height);
+      if (mouseY > 0 && mouseY < height) {
+        let distance = abs(x- mouseX);
+        if (distance < bestDist) {
+          bestDist = distance;
+          commentHovering = comment;
+        }
+      }
+    }
+    
+    // Highlight bar under mouse
+    if (commentHovering) {
+      strokeWeight(30);
+      let x = commentHovering.x;
+      stroke(255, 100)
+      line(x, 0, x, height);
+      fillInFakeComment(commentHovering);
+      
+    }
+    noStroke();
+    
+    
+    
+  }
+  
+</script>
+
+
+<script>
+  
+  
+  
+  let showOutput = false;
+
+  
+  function convertToSafeHTML(s) {
+      return s.replace(/&/g, "&amp;").replace(/>/g, "&gt;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+     }
+  
+  var q = x => document.getElementById(x);
+  var qv = (x, txt) => { // query, value
+    if (txt===undefined) {
+      return document.getElementById(x).value;
+    } else {
+      document.getElementById(x).value = txt;
+    }
+  };
+  var qh = (x, txt) => { // query, html
+    if (txt===undefined) {
+      return document.getElementById(x).innerHTML;
+    } else {
+      document.getElementById(x).innerHTML = txt;
+    }
+  };
+  
+  function updateSearch() {
+    q("search").classList.remove("is-invalid");
+    let val = qv("search");
+    if (val === "*") {
+      val = 5859456687489024;
+      qv("search", val);
+    }
+    let lens = [10, 11, 16];
+    if (isNaN(val) || !lens.includes(val.length)) {
+      return;
+    }
+    fetchProject(val, data => {
+      if (!data) {
+        q("search").classList.add("is-invalid");
+        console.log('bad');
+        return;
+      }
+      
+      showOutput = true;
+      q("out").style.display = "block";
+      q("search").style.top = "5px";
+      
+      let max_comments = 100000;
+      let url = `https://www.khanacademy.org/api/internal/discussions/scratchpad/${data.id}/comments?limit=${max_comments}&format=pretty&sort=2`;
+      fetch(url, { headers: {}, method: "GET", mode: "cors" }).then(r=>r.json()).then(init);
+    });
+  }
+  
+  
+  function fetchProject(id, callback) {
+    fetch(
+    `https://www.khanacademy.org/api/labs/scratchpads/${id}`, { headers: {}, method: "GET", mode: "cors" })
+    .then(r=>{
+      if (!r.ok) {
+        callback(0);
+      }
+      return r.json();
+    })
+    .then(callback)
+    .catch(x=>{console.error(x);callback(0)});
+  }
+  
+  function fillInFakeComment(c) {// c=comment
+    q("com-img").src = c.authorAvatarSrc;
+    qh("com-name", c.authorNickname);
+    q("com-content").textContent = c.content;
+    qh("com-timestamp", c.date);
+    qh("com-replies", c.replyCount);
+    qh("com-votes", c.sumVotesIncremented);
+    let tableBody = ``;
+    let props = Object.keys(c).sort();
+    for (let i = 0; i < props.length; i ++) {
+      let prop = props[i];
+      if (prop == "x") continue; // added property that doesn't exist
+      let value = c[prop];
+      if (typeof value === "string") {
+        value = `<span style='color:lime'>${convertToSafeHTML(value)}</span>`;
+      } else {
+        value = JSON.stringify(value);
+      }
+      tableBody += `
+      <tr>
+        <td>${prop}</td>
+        <td>${value}</td>
+      </tr>`;
+    }
+    qh("my-table", tableBody);
+  }
+  
+  
+  
+</script>
+</html>
