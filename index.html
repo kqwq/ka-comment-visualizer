@@ -13,7 +13,7 @@
     }
     body {
       background-color: rgb(14, 14, 14);
-  /*    overflow: hidden;*/
+      overflow: hidden;
     }
     #search {
       width: 50%;
@@ -214,8 +214,14 @@
     }
   }
   
-  function draw() {if (!data)return;
-    cam.x += (cam.gotoX - cam.x) * 0.1;
+  function draw() {if (!data)return;   
+     cam.ht += (cam.gotoHt - cam.ht) * 0.4;
+    if (cam.ht > cam.rangeX / width) {
+      cam.ht = cam.gotoHt = cam.rangeX / width;
+    } else if (cam.ht < cam.rangeX * 0.000001) {
+      cam.gotoHt = cam.ht = cam.rangeX / width;
+    }
+    cam.x += (cam.gotoX - cam.x) * 0.4;
     let limit1 = cam.x1 + width * cam.ht / 2;
     let limit2 = cam.x2 - width * cam.ht / 2;
     if (cam.x < limit1) {
@@ -223,12 +229,7 @@
     } else if (cam.x > limit2) {
       cam.x = cam.gotoX = limit2;
     }
-    cam.ht += (cam.gotoHt - cam.ht) * 0.1;
-    if (cam.ht > cam.rangeX / width) {
-      cam.ht = cam.gotoHt = cam.rangeX / width;
-    } else if (cam.ht < cam.rangeX * 0.000001) {
-      cam.gotoHt = cam.ht = cam.rangeX / width;
-    }
+
     if (mouseIsPressed) {
       cam.gotoX += (pmouseX - mouseX) * cam.ht;
     }
